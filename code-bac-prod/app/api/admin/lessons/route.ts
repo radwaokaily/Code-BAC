@@ -1,0 +1,4 @@
+import {NextResponse} from "next/server";import {z} from "zod";import {db} from "@/lib/db";import {requireUser} from "@/lib/auth";import {Role,ContentStatus} from "@prisma/client";
+const schema=z.object({id:z.string(),youtubeVideoId:z.string().max(100).optional(),description:z.string().optional(),status:z.nativeEnum(ContentStatus).optional()});
+export async function PATCH(req:Request){try{await requireUser(Role.ADMIN);const d=schema.parse(await req.json());const l=await db.lesson.update({where:{id:d.id},data:{youtubeVideoId:d.youtubeVideoId||null,description:d.description,status:d.status}});return NextResponse.json(l)}catch(e:any){return NextResponse.json({error:e.message},{status:400})}}
+export async function GET(){try{await requireUser(Role.ADMIN);const lessons=await db.lesson.findMany({include:{chapter:{include:{part:true}}},orderBy:{code:"asc"}});return NextResponse.json(lessons)}catch(e:any){return NextResponse.json({error:e.message},{status:401})}}

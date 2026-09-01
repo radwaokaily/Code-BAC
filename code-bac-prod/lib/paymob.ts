@@ -1,0 +1,10 @@
+import crypto from "crypto";
+const base=(process.env.PAYMOB_BASE_URL||"https://accept.paymob.com").replace(/\/$/,"");
+export async function createPaymobIntention(input:{amountCents:number;orderId:string;billing:{first_name:string;last_name:string;email:string;phone_number:string}}){
+ const secret=process.env.PAYMOB_SECRET_KEY;if(!secret)throw new Error("PAYMOB_SECRET_KEY is not configured");
+ const integration=Number(process.env.PAYMOB_INTEGRATION_ID||0);if(!integration)throw new Error("PAYMOB_INTEGRATION_ID is not configured");
+ const res=await fetch(`${base}/v1/intention/`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Token ${secret}`},body:JSON.stringify({amount:input.amountCents,currency:"EGP",payment_methods:[integration],items:[{name:"CODE BAC Course",amount:input.amountCents,description:"اشتراك كورس البرمجة والذكاء الاصطناعي",quantity:1}],special_reference:input.orderId,billing_data:{...input.billing,apartment:"NA",floor:"NA",street:"NA",building:"NA",shipping_method:"NA",postal_code:"NA",city:"Cairo",country:"EG",state:"NA"},notification_url:`${process.env.NEXT_PUBLIC_APP_URL}/api/paymob/webhook`,redirection_url:`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/payment-result`})});
+ if(!res.ok){const t=await res.text();throw new Error(`Paymob intention failed: ${res.status} ${t}`)}return res.json();
+}
+function b(v:any){return String(v??"");}
+export function verifyTransactionHmac(obj:any,received:string){const secret=process.env.PAYMOB_HMAC_SECRET;if(!secret||!received||!obj)return false;const fields=[obj.amount_cents,obj.created_at,obj.currency,obj.error_occured,obj.has_parent_transaction,obj.id,obj.integration_id,obj.is_3d_secure,obj.is_auth,obj.is_capture,obj.is_refunded,obj.is_standalone_payment,obj.is_voided,obj.order?.id,obj.owner,obj.pending,obj.source_data?.pan,obj.source_data?.sub_type,obj.source_data?.type,obj.success];const expected=crypto.createHmac("sha512",secret).update(fields.map(b).join("")).digest("hex");const a=Buffer.from(expected,"utf8"),c=Buffer.from(received,"utf8");return a.length===c.length&&crypto.timingSafeEqual(a,c);}

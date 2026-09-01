@@ -1,0 +1,2 @@
+import {NextResponse} from "next/server";import {db} from "@/lib/db";import {getCurrentUser} from "@/lib/auth";
+export async function GET(){const u=await getCurrentUser();if(!u?.student)return NextResponse.json({status:"UNAUTHENTICATED"},{status:401});const p=await db.payment.findFirst({where:{studentId:u.student.id},orderBy:{createdAt:"desc"}});const e=await db.enrollment.findUnique({where:{studentId_programId:{studentId:u.student.id,programId:"code-bac-program"}}});return NextResponse.json({paymentStatus:p?.status||"NONE",enrolled:Boolean(e?.paid)});}

@@ -1,0 +1,2 @@
+import {NextResponse} from "next/server";import {db} from "@/lib/db";import {getCurrentUser} from "@/lib/auth";
+export async function GET(){const u=await getCurrentUser();if(!u)return NextResponse.json({error:"Unauthorized"},{status:401});const c=await db.codingChallenge.findMany({select:{id:true,title:true,language:true,prompt:true,starterCode:true,difficulty:true,testCases:{select:{input:true,expectedOutput:true,hidden:true}}},orderBy:{title:"asc"}});return NextResponse.json(c)}
