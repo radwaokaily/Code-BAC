@@ -1,0 +1,3 @@
+export default function Parent(){
+ return <div><h1>متابعة الطالب</h1><div className="grid grid3"><div className="card"><div className="muted">التقدم</div><div className="stat">72%</div></div><div className="card"><div className="muted">متوسط الاختبارات</div><div className="stat">88%</div></div><div className="card"><div className="muted">وقت الدراسة</div><div className="stat">14h</div></div></div><div className="card" style={{marginTop:18}}><h2>يحتاج مراجعة</h2><p>القضايا الأخلاقية للذكاء الاصطناعي</p></div></div>
+}

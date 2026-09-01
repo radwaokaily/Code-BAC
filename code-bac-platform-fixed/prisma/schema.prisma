@@ -1,0 +1,206 @@
+generator client { provider = "prisma-client-js" }
+
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+
+enum Role { STUDENT PARENT TEACHER ADMIN }
+enum ContentStatus { DRAFT REVIEW APPROVED PUBLISHED }
+enum ExerciseSource { BOOK ORIGINAL }
+enum Difficulty { EASY MEDIUM HARD }
+
+model User {
+  id String @id @default(cuid())
+  name String
+  email String @unique
+  passwordHash String
+  role Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  student Student?
+  parent Parent?
+  teacher Teacher?
+}
+
+model Student {
+  id String @id @default(cuid())
+  userId String @unique
+  grade String?
+  school String?
+  governorate String?
+  user User @relation(fields:[userId], references:[id], onDelete: Cascade)
+  enrollments Enrollment[]
+  progress LessonProgress[]
+  submissions CodingSubmission[]
+}
+
+model Parent {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields:[userId], references:[id], onDelete: Cascade)
+  links ParentStudent[]
+}
+
+model Teacher {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields:[userId], references:[id], onDelete: Cascade)
+}
+
+model ParentStudent {
+  id String @id @default(cuid())
+  parentId String
+  studentId String
+  approved Boolean @default(false)
+  parent Parent @relation(fields:[parentId], references:[id], onDelete: Cascade)
+  student Student @relation(fields:[studentId], references:[id], onDelete: Cascade)
+  @@unique([parentId, studentId])
+}
+
+model Program {
+  id String @id @default(cuid())
+  title String
+  parts Part[]
+}
+
+model Part {
+  id String @id @default(cuid())
+  title String
+  programId String
+  program Program @relation(fields:[programId], references:[id], onDelete: Cascade)
+  chapters Chapter[]
+}
+
+model Chapter {
+  id String @id @default(cuid())
+  number Int
+  title String
+  partId String
+  part Part @relation(fields:[partId], references:[id], onDelete: Cascade)
+  lessons Lesson[]
+  @@unique([partId, number])
+}
+
+model Lesson {
+  id String @id @default(cuid())
+  code String
+  title String
+  description String?
+  objectives String[]
+  sourceExerciseText String?
+  youtubeVideoId String?
+  status ContentStatus @default(DRAFT)
+  chapterId String
+  chapter Chapter @relation(fields:[chapterId], references:[id], onDelete: Cascade)
+  exercises Exercise[]
+  progress LessonProgress[]
+  @@unique([chapterId, code])
+}
+
+model Exercise {
+  id String @id @default(cuid())
+  title String
+  type String
+  source ExerciseSource
+  sourcePage String?
+  skill String?
+  difficulty Difficulty @default(MEDIUM)
+  prompt String
+  explanation String?
+  status ContentStatus @default(DRAFT)
+  lessonId String
+  lesson Lesson @relation(fields:[lessonId], references:[id], onDelete: Cascade)
+  options ExerciseOption[]
+}
+
+model ExerciseOption {
+  id String @id @default(cuid())
+  text String
+  correct Boolean @default(false)
+  exerciseId String
+  exercise Exercise @relation(fields:[exerciseId], references:[id], onDelete: Cascade)
+}
+
+model Enrollment {
+  id String @id @default(cuid())
+  studentId String
+  programId String
+  paid Boolean @default(false)
+  createdAt DateTime @default(now())
+  student Student @relation(fields:[studentId], references:[id], onDelete: Cascade)
+  program Program @relation(fields:[programId], references:[id], onDelete: Cascade)
+  @@unique([studentId, programId])
+}
+
+model LessonProgress {
+  id String @id @default(cuid())
+  studentId String
+  lessonId String
+  completed Boolean @default(false)
+  secondsWatched Int @default(0)
+  updatedAt DateTime @updatedAt
+  student Student @relation(fields:[studentId], references:[id], onDelete: Cascade)
+  lesson Lesson @relation(fields:[lessonId], references:[id], onDelete: Cascade)
+  @@unique([studentId, lessonId])
+}
+
+model CodingChallenge {
+  id String @id @default(cuid())
+  title String
+  language String @default("javascript")
+  prompt String
+  starterCode String?
+  difficulty Difficulty @default(MEDIUM)
+  xp Int @default(50)
+  testCases CodingTestCase[]
+  submissions CodingSubmission[]
+}
+
+model CodingTestCase {
+  id String @id @default(cuid())
+  input String
+  expectedOutput String
+  hidden Boolean @default(false)
+  challengeId String
+  challenge CodingChallenge @relation(fields:[challengeId], references:[id], onDelete: Cascade)
+}
+
+model CodingSubmission {
+  id String @id @default(cuid())
+  code String
+  status String
+  score Int @default(0)
+  studentId String
+  challengeId String
+  student Student @relation(fields:[studentId], references:[id], onDelete: Cascade)
+  challenge CodingChallenge @relation(fields:[challengeId], references:[id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Payment {
+  id String @id @default(cuid())
+  orderId String @unique
+  studentId String?
+  amount Int
+  currency String @default("EGP")
+  provider String @default("PAYMOB")
+  status String @default("PENDING")
+  providerReference String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Subscription {
+  id String @id @default(cuid())
+  studentId String
+  plan String
+  status String @default("ACTIVE")
+  startsAt DateTime
+  endsAt DateTime?
+}
+
+model Certificate {
+  id String @id @default(cuid())
+  certificateId String @unique
+  studentId String
+  programId String
+  issuedAt DateTime @default(now())
+}
