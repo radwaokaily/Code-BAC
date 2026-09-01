@@ -46,16 +46,18 @@ model User {
 }
 
 model Student {
-  id          String             @id @default(cuid())
-  userId      String             @unique
-  grade       String?
-  school      String?
-  governorate String?
-  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  enrollments Enrollment[]
-  progress    LessonProgress[]
-  submissions CodingSubmission[]
-  links       ParentStudent[]
+  id            String             @id @default(cuid())
+  userId        String             @unique
+  grade         String?
+  school        String?
+  governorate   String?
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollments   Enrollment[]
+  progress      LessonProgress[]
+  submissions   CodingSubmission[]
+  links         ParentStudent[]
+  subscriptions Subscription[]
+  certificates  Certificate[]
 }
 
 model Parent {
@@ -83,10 +85,11 @@ model ParentStudent {
 }
 
 model Program {
-  id          String       @id @default(cuid())
-  title       String
-  parts       Part[]
-  enrollments Enrollment[]
+  id           String        @id @default(cuid())
+  title        String
+  parts        Part[]
+  enrollments  Enrollment[]
+  certificates Certificate[]
 }
 
 model Part {
@@ -227,6 +230,7 @@ model Subscription {
   status    String    @default("ACTIVE")
   startsAt  DateTime
   endsAt    DateTime?
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model Certificate {
@@ -235,4 +239,6 @@ model Certificate {
   studentId     String
   programId     String
   issuedAt      DateTime @default(now())
+  student       Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  program       Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
 }
